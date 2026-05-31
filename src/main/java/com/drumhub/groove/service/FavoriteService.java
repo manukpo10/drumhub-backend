@@ -44,7 +44,7 @@ public class FavoriteService {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUsername));
 
-        boolean favorited = favoriteRepository.existsByUserIdAndGrooveId(user.getId(), grooveId);
+        boolean favorited = favoriteRepository.existsByUserIdAndGrooveIdAndActivoTrue(user.getId(), grooveId);
         long total = favoriteRepository.countByGrooveIdAndActivoTrue(grooveId);
 
         return new FavoriteStatusResponse(grooveId, favorited, total);
@@ -66,16 +66,28 @@ public class FavoriteService {
                 .filter(Groove::isActivo)
                 .orElseThrow(() -> new ResourceNotFoundException("Groove not found: " + grooveId));
 
-        if (favoriteRepository.existsByUserIdAndGrooveId(user.getId(), grooveId)) {
-            throw new ConflictException("Already in favorites");
+        // A unique constraint on (user_id, groove_id) means a soft-deleted favorite still
+        // occupies the row. Reactivate it instead of inserting (which would 409 / violate the constraint).
+        Favorite favorite = favoriteRepository.findByUserIdAndGrooveId(user.getId(), grooveId)
+                .orElse(null);
+
+        if (favorite != null) {
+            if (favorite.isActivo()) {
+                throw new ConflictException("Already in favorites");
+            }
+            favorite.setActivo(true);
+        } else {
+            favorite = Favorite.builder()
+                    .user(user)
+                    .groove(groove)
+                    .build();
         }
 
-        Favorite favorite = Favorite.builder()
-                .user(user)
-                .groove(groove)
-                .build();
-
         favoriteRepository.save(favorite);
+
+        // Favorite == like in this app: persist the like on the groove so the count survives reloads.
+        groove.setLikes(groove.getLikes() + 1);
+        grooveRepository.save(groove);
 
         long total = favoriteRepository.countByGrooveIdAndActivoTrue(grooveId);
         return new FavoriteStatusResponse(grooveId, true, total);
@@ -86,15 +98,21 @@ public class FavoriteService {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUsername));
 
-        // Verify groove exists (active check optional for delete, but consistent)
-        grooveRepository.findById(grooveId)
+        Groove groove = grooveRepository.findById(grooveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Groove not found: " + grooveId));
 
         Favorite favorite = favoriteRepository.findByUserIdAndGrooveId(user.getId(), grooveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Favorite not found"));
 
+        boolean wasActive = favorite.isActivo();
         favorite.setActivo(false);
         favoriteRepository.save(favorite);
+
+        // Only decrement when it was actually an active like (avoid driving the count negative on double-remove).
+        if (wasActive) {
+            groove.setLikes(Math.max(0, groove.getLikes() - 1));
+            grooveRepository.save(groove);
+        }
 
         long total = favoriteRepository.countByGrooveIdAndActivoTrue(grooveId);
         return new FavoriteStatusResponse(grooveId, false, total);

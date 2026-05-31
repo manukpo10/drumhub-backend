@@ -13,6 +13,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
     boolean existsByUserIdAndGrooveId(Long userId, Long grooveId);
 
+    boolean existsByUserIdAndGrooveIdAndActivoTrue(Long userId, Long grooveId);
+
     Page<Favorite> findByUserIdAndActivoTrueOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     long countByGrooveIdAndActivoTrue(Long grooveId);
