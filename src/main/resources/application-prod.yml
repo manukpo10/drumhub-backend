@@ -1,0 +1,26 @@
+# Production profile — uses PostgreSQL.
+# IMPORTANT: Add the PostgreSQL driver dependency to pom.xml before activating this profile:
+#   <dependency>
+#     <groupId>org.postgresql</groupId>
+#     <artifactId>postgresql</artifactId>
+#     <scope>runtime</scope>
+#   </dependency>
+#
+# Required environment variables:
+#   DB_URL      — e.g. jdbc:postgresql://host:5432/drumhub
+#   DB_USER     — database username
+#   DB_PASSWORD — database password
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true

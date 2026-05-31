@@ -1,0 +1,59 @@
+package com.drumhub.subscription.web;
+
+import com.drumhub.common.web.ApiResponse;
+import com.drumhub.subscription.dto.CurrentPlanResponse;
+import com.drumhub.subscription.dto.PlanResponse;
+import com.drumhub.subscription.dto.UpdatePlanRequest;
+import com.drumhub.subscription.service.SubscriptionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "Subscription & Pricing", description = "Plan catalog and user plan management")
+public class SubscriptionController {
+
+    private final SubscriptionService subscriptionService;
+
+    @GetMapping("/api/pricing/plans")
+    @Operation(summary = "List all available pricing plans")
+    public ResponseEntity<ApiResponse<List<PlanResponse>>> getPlans() {
+        return ResponseEntity.ok(ApiResponse.ok(subscriptionService.getPlans()));
+    }
+
+    @GetMapping("/api/users/me/plan")
+    @Operation(summary = "Get the authenticated user's current plan")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<CurrentPlanResponse>> getCurrentPlan(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                subscriptionService.getCurrentPlan(userDetails.getUsername())
+        ));
+    }
+
+    @PutMapping("/api/users/me/plan")
+    @Operation(summary = "Update the authenticated user's plan")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<CurrentPlanResponse>> updatePlan(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdatePlanRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                subscriptionService.updatePlan(userDetails.getUsername(), request)
+        ));
+    }
+}
