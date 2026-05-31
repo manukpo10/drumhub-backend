@@ -2,6 +2,10 @@
 app:
   jwt:
     secret: dev-only-secret-not-for-production-use-32ch
+  mp:
+    access-token: TEST-dev-access-token
+    webhook-secret: dev-webhook-secret-for-local-testing
+    public-key: TEST-dev-public-key
 
 spring:
   datasource:

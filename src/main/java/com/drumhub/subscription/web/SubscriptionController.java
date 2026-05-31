@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -52,6 +53,17 @@ public class SubscriptionController {
     ) {
         return ResponseEntity.ok(ApiResponse.ok(
                 subscriptionService.downgradePlan(userDetails.getUsername())
+        ));
+    }
+
+    @PostMapping("/api/users/me/trial")
+    @Operation(summary = "Activate a 7-day PRO trial for the authenticated user")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<CurrentPlanResponse>> activateTrial(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                subscriptionService.startTrial(userDetails.getUsername())
         ));
     }
 }

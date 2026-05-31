@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN plan_expires_at TIMESTAMP;
+ALTER TABLE users ADD COLUMN trial_ends_at TIMESTAMP;
+ALTER TABLE users ADD COLUMN mp_payment_id VARCHAR(50);

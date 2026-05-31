@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -106,5 +107,27 @@ class SubscriptionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.plan").value("free"));
+    }
+
+    @Test
+    @WithMockUser(username = "drummer")
+    void activateTrial_withAuth_returns200WithProPlan() throws Exception {
+        CurrentPlanResponse response = new CurrentPlanResponse("pro", "drummer", PRO_FEATURES);
+        when(subscriptionService.startTrial("drummer")).thenReturn(response);
+
+        mockMvc.perform(post("/api/users/me/trial"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.plan").value("pro"));
+    }
+
+    @Test
+    @WithMockUser(username = "drummer")
+    void activateTrial_whenAlreadySubscribed_returns409() throws Exception {
+        when(subscriptionService.startTrial("drummer"))
+                .thenThrow(new com.drumhub.common.exception.ConflictException("User already has an active plan or trial."));
+
+        mockMvc.perform(post("/api/users/me/trial"))
+                .andExpect(status().isConflict());
     }
 }

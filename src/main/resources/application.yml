@@ -34,3 +34,7 @@ app:
     # Generate with: openssl rand -base64 48
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  mp:
+    access-token: ${MP_ACCESS_TOKEN}
+    webhook-secret: ${MP_WEBHOOK_SECRET}
+    public-key: ${MP_PUBLIC_KEY}

@@ -57,6 +57,10 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         // Public — auth endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        // Public — Mercado Pago webhook (signature-validated internally)
+                        .requestMatchers(HttpMethod.POST, "/api/webhooks/mp").permitAll()
+                        // Authenticated — payments checkout
+                        .requestMatchers(HttpMethod.POST, "/api/payments/checkout").authenticated()
                         // Public — pricing catalog
                         .requestMatchers(HttpMethod.GET, "/api/pricing/plans").permitAll()
                         // Authenticated — /me routes must come BEFORE the public wildcard

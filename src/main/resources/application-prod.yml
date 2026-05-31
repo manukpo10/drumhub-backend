@@ -7,6 +7,9 @@
 #   DB_PASSWORD — your database password
 #   APP_CORS_ALLOWED_ORIGINS — the deployed frontend origin(s), comma-separated
 #   JWT_SECRET  — a long random secret (>=32 chars); generate with: openssl rand -base64 48
+#   MP_ACCESS_TOKEN — Mercado Pago production access token
+#   MP_WEBHOOK_SECRET — Mercado Pago webhook secret for HMAC validation
+#   MP_PUBLIC_KEY — Mercado Pago public key (safe to expose in frontend)
 #
 # NOTE: use the SESSION pooler (5432), NOT the transaction pooler (6543) — Flyway's advisory
 # locks and Hibernate prepared statements need session-level features pgBouncer txn mode lacks.

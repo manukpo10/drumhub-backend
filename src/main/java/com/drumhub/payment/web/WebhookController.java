@@ -1,0 +1,39 @@
+package com.drumhub.payment.web;
+
+import com.drumhub.common.exception.BadRequestException;
+import com.drumhub.common.web.ApiResponse;
+import com.drumhub.payment.dto.MpWebhookPayload;
+import com.drumhub.payment.service.WebhookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/webhooks")
+@RequiredArgsConstructor
+@Tag(name = "Webhooks", description = "Mercado Pago webhook receiver")
+public class WebhookController {
+
+    private final WebhookService webhookService;
+
+    @PostMapping("/mp")
+    @Operation(summary = "Receive Mercado Pago payment notifications")
+    public ResponseEntity<ApiResponse<Void>> receiveWebhook(
+            @RequestBody MpWebhookPayload payload,
+            @RequestParam(name = "data.id", required = false, defaultValue = "") String dataId,
+            @RequestHeader(name = "X-Signature", required = false, defaultValue = "") String xSignature,
+            @RequestHeader(name = "X-Request-Id", required = false, defaultValue = "") String xRequestId
+    ) {
+        webhookService.processWebhook(payload, dataId, xSignature, xRequestId);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Received"));
+    }
+}

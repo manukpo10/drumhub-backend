@@ -14,6 +14,7 @@ import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -53,6 +54,15 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private Plan plan;
+
+    @Column(name = "plan_expires_at")
+    private Instant planExpiresAt;
+
+    @Column(name = "trial_ends_at")
+    private Instant trialEndsAt;
+
+    @Column(name = "mp_payment_id", length = 50)
+    private String mpPaymentId;
 
     // UserDetails interface implementation
 

@@ -1,6 +1,7 @@
 package com.drumhub.subscription.service;
 
 import com.drumhub.common.exception.BadRequestException;
+import com.drumhub.common.exception.ConflictException;
 import com.drumhub.common.exception.ResourceNotFoundException;
 import com.drumhub.subscription.dto.CurrentPlanResponse;
 import com.drumhub.subscription.dto.PlanFeatures;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
@@ -75,8 +78,14 @@ public class SubscriptionService {
     }
 
     // Called only from the Mercado Pago webhook after payment is confirmed server-side.
+    // 2-arg overload delegates to 4-arg with null expiry and payment ID (manual/admin activations).
     @Transactional
     public CurrentPlanResponse activatePaidPlan(String username, String planId) {
+        return activatePaidPlan(username, planId, null, null);
+    }
+
+    @Transactional
+    public CurrentPlanResponse activatePaidPlan(String username, String planId, Instant planExpiresAt, String mpPaymentId) {
         String normalizedPlan = planId.toLowerCase();
         if (!Set.of("pro", "studio").contains(normalizedPlan)) {
             throw new BadRequestException("Invalid paid plan: " + planId);
@@ -87,6 +96,10 @@ public class SubscriptionService {
 
         Plan newPlan = Plan.valueOf(normalizedPlan.toUpperCase());
         user.setPlan(newPlan);
+        user.setPlanExpiresAt(planExpiresAt);
+        user.setMpPaymentId(mpPaymentId);
+        user.setTrialEndsAt(null); // clear trial when paid plan activates
+
         userRepository.save(user);
 
         PlanResponse matchingPlan = PLAN_CATALOG.stream()
@@ -95,5 +108,36 @@ public class SubscriptionService {
                 .orElseThrow();
 
         return new CurrentPlanResponse(normalizedPlan, username, matchingPlan.features());
+    }
+
+    @Transactional
+    public CurrentPlanResponse startTrial(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+
+        Instant now = Instant.now();
+
+        boolean hasActivePaidPlan = user.getPlanExpiresAt() != null && user.getPlanExpiresAt().isAfter(now);
+        boolean hasActiveTrial = user.getTrialEndsAt() != null && user.getTrialEndsAt().isAfter(now);
+
+        if (hasActivePaidPlan || hasActiveTrial) {
+            throw new ConflictException("User already has an active plan or trial.");
+        }
+
+        user.setPlan(Plan.PRO);
+        user.setTrialEndsAt(now.plus(7, ChronoUnit.DAYS));
+        userRepository.save(user);
+
+        PlanResponse proPlan = PLAN_CATALOG.stream()
+                .filter(p -> p.id().equals("pro"))
+                .findFirst()
+                .orElseThrow();
+
+        return new CurrentPlanResponse("pro", username, proPlan.features());
+    }
+
+    @Transactional
+    public int expireOverduePlans() {
+        return userRepository.expireSubscriptions(Instant.now());
     }
 }
