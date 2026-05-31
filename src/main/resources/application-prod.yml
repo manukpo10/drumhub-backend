@@ -1,15 +1,15 @@
-# Production profile — uses PostgreSQL.
-# IMPORTANT: Add the PostgreSQL driver dependency to pom.xml before activating this profile:
-#   <dependency>
-#     <groupId>org.postgresql</groupId>
-#     <artifactId>postgresql</artifactId>
-#     <scope>runtime</scope>
-#   </dependency>
+# Production profile — uses PostgreSQL (e.g. Supabase). PostgreSQL driver is in pom.xml.
 #
 # Required environment variables:
-#   DB_URL      — e.g. jdbc:postgresql://host:5432/drumhub
-#   DB_USER     — database username
-#   DB_PASSWORD — database password
+#   DB_URL      — JDBC URL. For Supabase + Render (IPv4) use the SESSION pooler on port 5432:
+#                 jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require
+#   DB_USER     — Supabase pooler user: postgres.<project-ref>
+#   DB_PASSWORD — your database password
+#   APP_CORS_ALLOWED_ORIGINS — the deployed frontend origin(s), comma-separated
+#   JWT_SECRET  — a long random secret (>=32 chars); keep it stable so tokens survive restarts
+#
+# NOTE: use the SESSION pooler (5432), NOT the transaction pooler (6543) — Flyway's advisory
+# locks and Hibernate prepared statements need session-level features pgBouncer txn mode lacks.
 
 spring:
   datasource:
@@ -20,7 +20,9 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
+      # Flyway fully owns the schema. "none" (not "validate") avoids a startup failure from
+      # Hibernate mapping Instant -> timestamptz while the migrations create plain TIMESTAMP.
+      ddl-auto: none
     show-sql: false
   flyway:
     enabled: true
