@@ -26,9 +26,11 @@ springdoc:
 
 app:
   cors:
-    # Comma-separated. In prod set APP_CORS_ALLOWED_ORIGINS to the deployed frontend URL,
-    # e.g. https://drumhub.vercel.app
+    # Comma-separated. In prod set APP_CORS_ALLOWED_ORIGINS to the deployed frontend URL.
+    # No default: app will fail to start in prod if the env var is missing (intentional).
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
   jwt:
-    secret: ${JWT_SECRET:drumhub-dev-secret-key-must-be-at-least-32-chars-long}
+    # No default: app will refuse to start if JWT_SECRET is not set in the environment.
+    # Generate with: openssl rand -base64 48
+    secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}

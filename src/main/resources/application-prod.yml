@@ -6,10 +6,17 @@
 #   DB_USER     — Supabase pooler user: postgres.<project-ref>
 #   DB_PASSWORD — your database password
 #   APP_CORS_ALLOWED_ORIGINS — the deployed frontend origin(s), comma-separated
-#   JWT_SECRET  — a long random secret (>=32 chars); keep it stable so tokens survive restarts
+#   JWT_SECRET  — a long random secret (>=32 chars); generate with: openssl rand -base64 48
 #
 # NOTE: use the SESSION pooler (5432), NOT the transaction pooler (6543) — Flyway's advisory
 # locks and Hibernate prepared statements need session-level features pgBouncer txn mode lacks.
+
+# Disable API docs exposure in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 spring:
   datasource:

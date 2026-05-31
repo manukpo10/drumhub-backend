@@ -6,7 +6,6 @@ import com.drumhub.subscription.dto.CurrentPlanResponse;
 import com.drumhub.subscription.dto.PlanFeatures;
 import com.drumhub.subscription.dto.PlanResponse;
 import com.drumhub.subscription.dto.PricingTier;
-import com.drumhub.subscription.dto.UpdatePlanRequest;
 import com.drumhub.user.domain.Plan;
 import com.drumhub.user.domain.User;
 import com.drumhub.user.repository.UserRepository;
@@ -56,25 +55,45 @@ public class SubscriptionService {
         return new CurrentPlanResponse(planId, username, matchingPlan.features());
     }
 
+    // Only downgrade to free is allowed via this endpoint.
+    // Upgrades to pro/studio happen exclusively through the Mercado Pago payment webhook
+    // (server-to-server, signature-validated) to prevent self-service plan manipulation.
     @Transactional
-    public CurrentPlanResponse updatePlan(String username, UpdatePlanRequest request) {
-        String planId = request.plan().toLowerCase();
-        if (!VALID_PLAN_IDS.contains(planId)) {
-            throw new BadRequestException("Invalid plan. Must be one of: free, pro, studio");
+    public CurrentPlanResponse downgradePlan(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+
+        user.setPlan(Plan.FREE);
+        userRepository.save(user);
+
+        PlanResponse freePlan = PLAN_CATALOG.stream()
+                .filter(p -> p.id().equals("free"))
+                .findFirst()
+                .orElseThrow();
+
+        return new CurrentPlanResponse("free", username, freePlan.features());
+    }
+
+    // Called only from the Mercado Pago webhook after payment is confirmed server-side.
+    @Transactional
+    public CurrentPlanResponse activatePaidPlan(String username, String planId) {
+        String normalizedPlan = planId.toLowerCase();
+        if (!Set.of("pro", "studio").contains(normalizedPlan)) {
+            throw new BadRequestException("Invalid paid plan: " + planId);
         }
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
-        Plan newPlan = Plan.valueOf(planId.toUpperCase());
+        Plan newPlan = Plan.valueOf(normalizedPlan.toUpperCase());
         user.setPlan(newPlan);
         userRepository.save(user);
 
         PlanResponse matchingPlan = PLAN_CATALOG.stream()
-                .filter(p -> p.id().equals(planId))
+                .filter(p -> p.id().equals(normalizedPlan))
                 .findFirst()
                 .orElseThrow();
 
-        return new CurrentPlanResponse(planId, username, matchingPlan.features());
+        return new CurrentPlanResponse(normalizedPlan, username, matchingPlan.features());
     }
 }
