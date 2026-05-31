@@ -4,7 +4,6 @@ import com.drumhub.common.exception.BadRequestException;
 import com.drumhub.common.exception.ResourceNotFoundException;
 import com.drumhub.subscription.dto.CurrentPlanResponse;
 import com.drumhub.subscription.dto.PlanResponse;
-import com.drumhub.subscription.dto.UpdatePlanRequest;
 import com.drumhub.user.domain.Plan;
 import com.drumhub.user.domain.User;
 import com.drumhub.user.repository.UserRepository;
@@ -76,26 +75,35 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    void updatePlan_whenInvalidPlan_throwsBadRequestException() {
-        UpdatePlanRequest request = new UpdatePlanRequest("premium");
+    void downgradePlan_setsUserPlanToFree() {
+        User user = buildUser("drummer", Plan.PRO);
+        when(userRepository.findByUsername("drummer")).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        assertThatThrownBy(() -> subscriptionService.updatePlan("drummer", request))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Invalid plan");
+        CurrentPlanResponse response = subscriptionService.downgradePlan("drummer");
+
+        assertThat(response.plan()).isEqualTo("free");
+        assertThat(response.username()).isEqualTo("drummer");
+        verify(userRepository).save(user);
     }
 
     @Test
-    void updatePlan_whenValid_updatesUserPlan() {
+    void activatePaidPlan_withValidPlan_updatesPlan() {
         User user = buildUser("drummer", Plan.FREE);
         when(userRepository.findByUsername("drummer")).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UpdatePlanRequest request = new UpdatePlanRequest("pro");
-        CurrentPlanResponse response = subscriptionService.updatePlan("drummer", request);
+        CurrentPlanResponse response = subscriptionService.activatePaidPlan("drummer", "pro");
 
         assertThat(response.plan()).isEqualTo("pro");
-        assertThat(response.username()).isEqualTo("drummer");
         assertThat(response.features().badge()).isEqualTo("PRO");
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void activatePaidPlan_withFreePlan_throwsBadRequestException() {
+        assertThatThrownBy(() -> subscriptionService.activatePaidPlan("drummer", "free"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid paid plan");
     }
 }

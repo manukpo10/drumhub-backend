@@ -6,7 +6,6 @@ import com.drumhub.subscription.dto.CurrentPlanResponse;
 import com.drumhub.subscription.dto.PlanFeatures;
 import com.drumhub.subscription.dto.PlanResponse;
 import com.drumhub.subscription.dto.PricingTier;
-import com.drumhub.subscription.dto.UpdatePlanRequest;
 import com.drumhub.subscription.service.SubscriptionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -22,11 +21,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,11 +75,7 @@ class SubscriptionControllerTest {
     }
 
     @Test
-    void getCurrentPlan_withoutAuth_returns403() throws Exception {
-        // With addFilters=false, simulate missing principal causing NPE → 500,
-        // so we trigger the service to throw to simulate the unauthorized case.
-        // Real auth check is covered by SecurityConfig integration.
-        // Here we verify the endpoint invokes the service with the principal's username.
+    void getCurrentPlan_withoutAuth_returns500() throws Exception {
         when(subscriptionService.getCurrentPlan(null))
                 .thenThrow(new NullPointerException("No principal"));
 
@@ -104,18 +98,13 @@ class SubscriptionControllerTest {
 
     @Test
     @WithMockUser(username = "drummer")
-    void updatePlan_withAuth_returns200() throws Exception {
-        CurrentPlanResponse response = new CurrentPlanResponse("pro", "drummer", PRO_FEATURES);
-        when(subscriptionService.updatePlan(anyString(), any(UpdatePlanRequest.class))).thenReturn(response);
+    void cancelPlan_withAuth_downgradestoFree() throws Exception {
+        CurrentPlanResponse response = new CurrentPlanResponse("free", "drummer", FREE_FEATURES);
+        when(subscriptionService.downgradePlan(anyString())).thenReturn(response);
 
-        UpdatePlanRequest request = new UpdatePlanRequest("pro");
-
-        mockMvc.perform(put("/api/users/me/plan")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(delete("/api/users/me/plan"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.plan").value("pro"))
-                .andExpect(jsonPath("$.data.features.badge").value("PRO"));
+                .andExpect(jsonPath("$.data.plan").value("free"));
     }
 }
