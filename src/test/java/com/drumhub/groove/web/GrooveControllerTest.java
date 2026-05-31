@@ -65,7 +65,7 @@ class GrooveControllerTest {
             List.of("shuffle", "ghost notes"),
             "The classic shuffle",
             Map.of("kick", List.of(1, 0, 0, 0)),
-            "4/4", 1,
+            "4/4", 1, "pearl",
             Instant.now()
     );
 
@@ -116,7 +116,7 @@ class GrooveControllerTest {
 
         CreateGrooveRequest request = new CreateGrooveRequest(
                 "Test Groove", "funk", 100, "Avanzado",
-                null, List.of(), Map.of("kick", List.of(1, 0)), "4/4", 1
+                null, List.of(), Map.of("kick", List.of(1, 0)), "4/4", 1, "pearl"
         );
 
         // With null principal, expect 500 (NPE) — real security would give 403
@@ -135,7 +135,7 @@ class GrooveControllerTest {
         CreateGrooveRequest request = new CreateGrooveRequest(
                 "Purdie Shuffle", "funk", 98, "Avanzado",
                 "The classic shuffle", List.of("shuffle"),
-                Map.of("kick", List.of(1, 0, 0, 0)), "4/4", 1
+                Map.of("kick", List.of(1, 0, 0, 0)), "4/4", 1, "pearl"
         );
 
         mockMvc.perform(post("/api/grooves")

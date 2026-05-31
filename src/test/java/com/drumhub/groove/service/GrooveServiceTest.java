@@ -91,7 +91,7 @@ class GrooveServiceTest {
         GrooveResponse response = new GrooveResponse(
                 1L, "test-groove", "Test Groove", "user1", "Test User",
                 "Funk", "funk", 100, "Avanzado", 0L, 0L, false,
-                List.of(), null, Map.of(), "4/4", 1, null
+                List.of(), null, Map.of(), "4/4", 1, "pearl", null
         );
         when(grooveMapper.toResponse(groove)).thenReturn(response);
 
@@ -109,7 +109,7 @@ class GrooveServiceTest {
 
         CreateGrooveRequest request = new CreateGrooveRequest(
                 "My Groove", "unknown-genre", 100, "Avanzado",
-                null, null, Map.of(), "4/4", 1
+                null, null, Map.of(), "4/4", 1, "pearl"
         );
 
         assertThatThrownBy(() -> grooveService.create("drummer1", request))
@@ -131,13 +131,13 @@ class GrooveServiceTest {
         GrooveResponse expectedResponse = new GrooveResponse(
                 1L, "my-groove", "My Groove", "drummer1", "Test User",
                 "Funk", "funk", 100, "Avanzado", 0L, 0L, false,
-                List.of(), null, Map.of(), "4/4", 1, null
+                List.of(), null, Map.of(), "4/4", 1, "pearl", null
         );
         when(grooveMapper.toResponse(savedGroove)).thenReturn(expectedResponse);
 
         CreateGrooveRequest request = new CreateGrooveRequest(
                 "My Groove", "funk", 100, "Avanzado",
-                null, List.of(), Map.of(), "4/4", 1
+                null, List.of(), Map.of(), "4/4", 1, "pearl"
         );
 
         GrooveResponse result = grooveService.create("drummer1", request);
@@ -171,7 +171,7 @@ class GrooveServiceTest {
 
         CreateGrooveRequest request = new CreateGrooveRequest(
                 "Extra Groove", "funk", 100, "Avanzado",
-                null, List.of(), Map.of(), "4/4", 1
+                null, List.of(), Map.of(), "4/4", 1, "pearl"
         );
 
         assertThatThrownBy(() -> grooveService.create("freeDrummer", request))
