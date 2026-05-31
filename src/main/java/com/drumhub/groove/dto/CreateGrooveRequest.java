@@ -18,5 +18,6 @@ public record CreateGrooveRequest(
         List<@Size(max = 50) String> tags,
         @NotNull Map<String, List<Integer>> pattern,
         String timeSig,
-        @Min(1) @Max(4) Integer bars
+        @Min(1) @Max(4) Integer bars,
+        @Size(max = 20) String kit
 ) {}

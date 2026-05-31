@@ -84,4 +84,8 @@ public class Groove extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Integer bars = 1;
+
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String kit = "pearl";
 }

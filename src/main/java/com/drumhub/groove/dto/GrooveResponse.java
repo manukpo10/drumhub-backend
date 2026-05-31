@@ -22,5 +22,6 @@ public record GrooveResponse(
         Map<String, List<Integer>> pattern,
         String timeSig,
         Integer bars,
+        String kit,
         Instant createdAt
 ) {}

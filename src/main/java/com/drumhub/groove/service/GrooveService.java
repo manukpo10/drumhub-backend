@@ -149,6 +149,7 @@ public class GrooveService {
                 .pattern(request.pattern())
                 .timeSig(request.timeSig() != null ? request.timeSig() : "4/4")
                 .bars(request.bars() != null ? request.bars() : 1)
+                .kit(request.kit() != null ? request.kit() : "pearl")
                 .build();
 
         return grooveMapper.toResponse(grooveRepository.save(groove));
@@ -184,6 +185,9 @@ public class GrooveService {
         }
         if (request.bars() != null) {
             groove.setBars(request.bars());
+        }
+        if (request.kit() != null) {
+            groove.setKit(request.kit());
         }
 
         return grooveMapper.toResponse(grooveRepository.save(groove));
