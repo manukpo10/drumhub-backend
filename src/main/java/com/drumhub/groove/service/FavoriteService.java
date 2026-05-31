@@ -10,11 +10,16 @@ import com.drumhub.groove.dto.FavoriteStatusResponse;
 import com.drumhub.groove.mapper.FavoriteMapper;
 import com.drumhub.groove.repository.FavoriteRepository;
 import com.drumhub.groove.repository.GrooveRepository;
+import com.drumhub.notification.domain.NotificationType;
+import com.drumhub.notification.dto.CreateNotificationRequest;
+import com.drumhub.notification.service.NotificationService;
 import com.drumhub.subscription.domain.PlanLimits;
 import com.drumhub.user.domain.Plan;
 import com.drumhub.user.domain.User;
 import com.drumhub.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +33,10 @@ public class FavoriteService {
     private final GrooveRepository grooveRepository;
     private final UserRepository userRepository;
     private final FavoriteMapper favoriteMapper;
+
+    @Lazy
+    @Autowired
+    private NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public Page<FavoriteResponse> getFavorites(String currentUsername, Pageable pageable) {
@@ -88,6 +97,19 @@ public class FavoriteService {
         // Favorite == like in this app: persist the like on the groove so the count survives reloads.
         groove.setLikes(groove.getLikes() + 1);
         grooveRepository.save(groove);
+
+        // Notify the groove's author that someone liked their groove (skip self-likes).
+        String authorUsername = groove.getAuthor().getUsername();
+        if (!authorUsername.equals(user.getUsername())) {
+            notificationService.push(new CreateNotificationRequest(
+                    authorUsername,
+                    NotificationType.LIKE,
+                    user.getUsername(),
+                    groove.getSlug(),
+                    groove.getTitle(),
+                    null
+            ));
+        }
 
         long total = favoriteRepository.countByGrooveIdAndActivoTrue(grooveId);
         return new FavoriteStatusResponse(grooveId, true, total);
