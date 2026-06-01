@@ -36,7 +36,7 @@ public class CheckoutService {
     );
 
     // Back URLs — in production these should be configured, but hardcoded for simplicity per design
-    private static final String BACK_URL_BASE = "https://drumhub.app";
+    private static final String BACK_URL_BASE = "https://drumhub.io";
 
     private final MercadoPagoClient mercadoPagoClient;
     private final MercadoPagoProperties mpProperties;
