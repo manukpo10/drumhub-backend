@@ -70,6 +70,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/grooves/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/grooves/*/plays").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/genres/**").permitAll()
+                        // Public — community activity feed (shown on home page to guests)
+                        .requestMatchers(HttpMethod.GET, "/api/activity/**").permitAll()
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )

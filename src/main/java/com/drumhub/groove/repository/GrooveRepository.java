@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface GrooveRepository extends JpaRepository<Groove, Long>, JpaSpecificationExecutor<Groove> {
@@ -21,4 +22,8 @@ public interface GrooveRepository extends JpaRepository<Groove, Long>, JpaSpecif
     Page<Groove> findTrending(Pageable pageable);
 
     long countByAuthorUsernameAndActivoTrue(String username);
+
+    /** Recent uploads for the activity feed — author eagerly fetched to avoid N+1. */
+    @Query("SELECT g FROM Groove g JOIN FETCH g.author WHERE g.activo = true ORDER BY g.createdAt DESC")
+    List<Groove> findRecentForActivityFeed(Pageable pageable);
 }
