@@ -32,11 +32,12 @@ public class WebhookService {
      */
     public void processWebhook(MpWebhookPayload payload, String dataId,
                                 String xSignature, String xRequestId) {
-        boolean valid = SignatureVerifier.verify(dataId, xRequestId, xSignature, mpProperties.getWebhookSecret().trim());
+        String secret = mpProperties.getWebhookSecret().trim();
+        boolean valid = SignatureVerifier.verify(dataId, xRequestId, xSignature, secret);
         if (!valid) {
-            // Log inputs so we can diagnose HMAC mismatches without exposing the secret
-            log.warn("Webhook HMAC validation failed — dataId='{}' xRequestId='{}' xSignature='{}'",
-                    dataId, xRequestId, xSignature);
+            // Log inputs + computed manifest/hash so we can diagnose HMAC mismatches (no secret exposed)
+            log.warn("Webhook HMAC validation failed — {}",
+                    SignatureVerifier.diagnose(dataId, xRequestId, xSignature, secret));
             throw new BadRequestException("Invalid or missing Mercado Pago webhook signature.");
         }
         log.info("Webhook HMAC valid — dataId='{}' action='{}'", dataId, payload.action());
