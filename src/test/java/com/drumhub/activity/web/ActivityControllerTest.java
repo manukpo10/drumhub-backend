@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -42,7 +43,7 @@ class ActivityControllerTest {
 
     @Test
     void feed_withNoEvents_returns200AndEmptyList() throws Exception {
-        when(activityService.getRecentFeed(anyInt())).thenReturn(List.of());
+        when(activityService.getRecentFeed(anyInt(), any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/activity/feed"))
                 .andExpect(status().isOk())
@@ -58,7 +59,7 @@ class ActivityControllerTest {
                 null, null,
                 Instant.now()
         );
-        when(activityService.getRecentFeed(anyInt())).thenReturn(List.of(event));
+        when(activityService.getRecentFeed(anyInt(), any())).thenReturn(List.of(event));
 
         mockMvc.perform(get("/api/activity/feed"))
                 .andExpect(status().isOk())
@@ -69,7 +70,7 @@ class ActivityControllerTest {
 
     @Test
     void feed_capsAtMaxSize50() throws Exception {
-        when(activityService.getRecentFeed(50)).thenReturn(List.of());
+        when(activityService.getRecentFeed(anyInt(), any())).thenReturn(List.of());
 
         // size=999 should be capped to 50
         mockMvc.perform(get("/api/activity/feed").param("size", "999"))

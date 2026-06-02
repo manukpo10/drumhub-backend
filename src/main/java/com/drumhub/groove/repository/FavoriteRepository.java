@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +27,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     /** Recent likes for the activity feed — user and groove eagerly fetched. */
     @Query("SELECT f FROM Favorite f JOIN FETCH f.user JOIN FETCH f.groove WHERE f.activo = true ORDER BY f.createdAt DESC")
     List<Favorite> findRecentForActivityFeed(Pageable pageable);
+
+    /** Recent likes by a specific user for the profile activity feed. */
+    @Query("SELECT f FROM Favorite f JOIN FETCH f.user JOIN FETCH f.groove WHERE f.activo = true AND f.user.username = :username ORDER BY f.createdAt DESC")
+    List<Favorite> findRecentByUserForActivityFeed(@Param("username") String username, Pageable pageable);
 }

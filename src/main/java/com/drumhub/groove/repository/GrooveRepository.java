@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +27,8 @@ public interface GrooveRepository extends JpaRepository<Groove, Long>, JpaSpecif
     /** Recent uploads for the activity feed — author eagerly fetched to avoid N+1. */
     @Query("SELECT g FROM Groove g JOIN FETCH g.author WHERE g.activo = true ORDER BY g.createdAt DESC")
     List<Groove> findRecentForActivityFeed(Pageable pageable);
+
+    /** Recent uploads by a specific user for the profile activity feed. */
+    @Query("SELECT g FROM Groove g JOIN FETCH g.author WHERE g.activo = true AND g.author.username = :username ORDER BY g.createdAt DESC")
+    List<Groove> findRecentByUserForActivityFeed(@Param("username") String username, Pageable pageable);
 }

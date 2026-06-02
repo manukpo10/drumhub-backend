@@ -26,7 +26,8 @@ public class ActivityController {
     @GetMapping("/feed")
     @Operation(summary = "Recent community activity: uploads, comments, likes and follows")
     public ApiResponse<List<ActivityEventDto>> getFeed(
-            @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.ok(activityService.getRecentFeed(Math.min(size, MAX_SIZE)));
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String user) {
+        return ApiResponse.ok(activityService.getRecentFeed(Math.min(size, MAX_SIZE), user));
     }
 }

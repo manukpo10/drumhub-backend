@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -17,4 +18,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     /** Recent comments for the activity feed — author and groove eagerly fetched. */
     @Query("SELECT c FROM Comment c JOIN FETCH c.author JOIN FETCH c.groove WHERE c.activo = true ORDER BY c.createdAt DESC")
     List<Comment> findRecentForActivityFeed(Pageable pageable);
+
+    /** Recent comments by a specific user for the profile activity feed. */
+    @Query("SELECT c FROM Comment c JOIN FETCH c.author JOIN FETCH c.groove WHERE c.activo = true AND c.author.username = :username ORDER BY c.createdAt DESC")
+    List<Comment> findRecentByUserForActivityFeed(@Param("username") String username, Pageable pageable);
 }
