@@ -40,8 +40,7 @@ public class WebhookService {
             // API with our access token (done in processWebhookSkipSignature). Confirming the
             // payment exists, is approved, and carries our external_reference is a stronger
             // guarantee than the signature — an attacker cannot forge that without our token.
-            log.warn("Webhook HMAC failed — falling back to MP API verification. {}",
-                    SignatureVerifier.diagnose(dataId, xRequestId, xSignature, secret));
+            log.warn("Webhook HMAC mismatch for dataId='{}' — verifying via MP API instead.", dataId);
         }
 
         processWebhookSkipSignature(payload, dataId);
