@@ -56,7 +56,7 @@ public class SecurityConfig {
                         // H2 console — dev only (never reachable in prod: H2 not configured)
                         .requestMatchers("/h2-console/**").permitAll()
                         // Public — auth endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/google").permitAll()
                         // Public — Mercado Pago webhook (signature-validated internally)
                         .requestMatchers(HttpMethod.POST, "/api/webhooks/mp").permitAll()
                         // Authenticated — payments checkout

@@ -38,3 +38,6 @@ app:
     access-token: ${MP_ACCESS_TOKEN}
     webhook-secret: ${MP_WEBHOOK_SECRET}
     public-key: ${MP_PUBLIC_KEY}
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:431278406816-9iq60ns1ro7pmbo6ji2j0j849n93avcs.apps.googleusercontent.com}
