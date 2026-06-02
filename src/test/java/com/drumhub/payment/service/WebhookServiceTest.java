@@ -1,6 +1,5 @@
 package com.drumhub.payment.service;
 
-import com.drumhub.common.exception.BadRequestException;
 import com.drumhub.payment.config.MercadoPagoProperties;
 import com.drumhub.payment.dto.MpWebhookPayload;
 import com.drumhub.subscription.service.SubscriptionService;
@@ -19,7 +18,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,18 +52,24 @@ class WebhookServiceTest {
     }
 
     @Test
-    void processWebhook_withInvalidSignature_throwsBadRequest() {
+    void processWebhook_withInvalidSignature_fallsBackToApiVerificationAndActivates() {
         MpWebhookPayload payload = new MpWebhookPayload(
                 "notif-1", "payment", "payment.approved",
                 new MpWebhookPayload.MpWebhookData(DATA_ID)
         );
 
-        // signature verifier will return false for this fake sig
-        assertThatThrownBy(() ->
-                webhookService.processWebhook(payload, DATA_ID, VALID_SIGNATURE, REQUEST_ID)
-        ).isInstanceOf(BadRequestException.class);
+        Map<String, Object> paymentData = Map.of(
+                "id", DATA_ID,
+                "status", "approved",
+                "external_reference", "alice:pro:monthly"
+        );
+        when(mercadoPagoClient.getPayment(anyString(), eq(DATA_ID))).thenReturn(paymentData);
 
-        verify(subscriptionService, never()).activatePaidPlan(anyString(), anyString(), any(), any());
+        // HMAC fails for this fake signature, but instead of rejecting we fall back to
+        // authoritative verification against MP's API and still activate the plan.
+        webhookService.processWebhook(payload, DATA_ID, VALID_SIGNATURE, REQUEST_ID);
+
+        verify(subscriptionService).activatePaidPlan(eq("alice"), eq("pro"), any(), eq(DATA_ID));
     }
 
     @Test

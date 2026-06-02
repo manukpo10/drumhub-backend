@@ -1,6 +1,5 @@
 package com.drumhub.payment.service;
 
-import com.drumhub.common.exception.BadRequestException;
 import com.drumhub.common.exception.ResourceNotFoundException;
 import com.drumhub.payment.config.MercadoPagoProperties;
 import com.drumhub.payment.dto.MpWebhookPayload;
@@ -26,21 +25,24 @@ public class WebhookService {
     private final MercadoPagoProperties mpProperties;
 
     /**
-     * Processes an MP webhook notification, validating the HMAC signature first.
-     *
-     * @throws BadRequestException if the signature is invalid or missing
+     * Processes an MP webhook notification. Attempts HMAC signature validation; on failure it
+     * falls back to authoritative verification by re-fetching the payment from MP's API.
      */
     public void processWebhook(MpWebhookPayload payload, String dataId,
                                 String xSignature, String xRequestId) {
         String secret = mpProperties.getWebhookSecret().trim();
         boolean valid = SignatureVerifier.verify(dataId, xRequestId, xSignature, secret);
-        if (!valid) {
-            // Log inputs + computed manifest/hash so we can diagnose HMAC mismatches (no secret exposed)
-            log.warn("Webhook HMAC validation failed — {}",
+        if (valid) {
+            log.info("Webhook HMAC valid — dataId='{}' action='{}'", dataId, payload.action());
+        } else {
+            // HMAC could not be validated (MP panel secret mismatch). Do NOT reject here:
+            // fall back to authoritative verification by re-fetching the payment from MP's
+            // API with our access token (done in processWebhookSkipSignature). Confirming the
+            // payment exists, is approved, and carries our external_reference is a stronger
+            // guarantee than the signature — an attacker cannot forge that without our token.
+            log.warn("Webhook HMAC failed — falling back to MP API verification. {}",
                     SignatureVerifier.diagnose(dataId, xRequestId, xSignature, secret));
-            throw new BadRequestException("Invalid or missing Mercado Pago webhook signature.");
         }
-        log.info("Webhook HMAC valid — dataId='{}' action='{}'", dataId, payload.action());
 
         processWebhookSkipSignature(payload, dataId);
     }
