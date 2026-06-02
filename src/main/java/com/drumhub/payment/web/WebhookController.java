@@ -29,10 +29,11 @@ public class WebhookController {
     @Operation(summary = "Receive Mercado Pago payment notifications")
     public ResponseEntity<ApiResponse<Void>> receiveWebhook(
             @RequestBody MpWebhookPayload payload,
-            @RequestParam(name = "data.id", required = false, defaultValue = "") String dataId,
             @RequestHeader(name = "X-Signature", required = false, defaultValue = "") String xSignature,
             @RequestHeader(name = "X-Request-Id", required = false, defaultValue = "") String xRequestId
     ) {
+        // data.id comes in the JSON body, not as a query param
+        String dataId = (payload.data() != null && payload.data().id() != null) ? payload.data().id() : "";
         webhookService.processWebhook(payload, dataId, xSignature, xRequestId);
         return ResponseEntity.ok(ApiResponse.ok(null, "Received"));
     }
