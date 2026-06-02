@@ -3,6 +3,7 @@ package com.drumhub.payment.service;
 import com.drumhub.common.exception.BadRequestException;
 import com.drumhub.common.exception.ResourceNotFoundException;
 import com.drumhub.payment.config.MercadoPagoProperties;
+import com.drumhub.payment.config.PlanPrices;
 import com.drumhub.payment.dto.CheckoutRequest;
 import com.drumhub.payment.dto.CheckoutResponse;
 import com.drumhub.user.domain.User;
@@ -22,14 +23,6 @@ public class CheckoutService {
 
     private static final Set<String> VALID_PAID_PLANS = Set.of("pro", "studio");
 
-    // ARS prices: key = "planId:period"
-    private static final Map<String, Integer> PRICES = Map.of(
-            "pro:monthly", 5000,
-            "pro:annual", 48000,
-            "studio:monthly", 12000,
-            "studio:annual", 116000
-    );
-
     private static final Map<String, String> PLAN_NAMES = Map.of(
             "pro", "DrumHub Pro",
             "studio", "DrumHub Studio"
@@ -41,6 +34,7 @@ public class CheckoutService {
     private final MercadoPagoClient mercadoPagoClient;
     private final MercadoPagoProperties mpProperties;
     private final UserRepository userRepository;
+    private final DollarRateService dollarRateService;
 
     public CheckoutResponse createCheckout(CheckoutRequest request, String username) {
         String planId = request.planId().toLowerCase();
@@ -50,11 +44,17 @@ public class CheckoutService {
             throw new BadRequestException("Cannot checkout with plan: " + planId + ". Only 'pro' and 'studio' are allowed.");
         }
 
-        String priceKey = planId + ":" + period;
-        Integer unitPrice = PRICES.get(priceKey);
-        if (unitPrice == null) {
-            throw new BadRequestException("Invalid plan/period combination: " + planId + "/" + period);
+        PlanPrices.Usd usdPrices = PlanPrices.PAID.get(planId);
+        int usdAmount;
+        if ("monthly".equals(period)) {
+            usdAmount = usdPrices.monthly();
+        } else if ("annual".equals(period)) {
+            usdAmount = usdPrices.annual();
+        } else {
+            throw new BadRequestException("Invalid period: " + period + ". Valid values are 'monthly' and 'annual'.");
         }
+
+        int unitPrice = PlanPrices.toArs(usdAmount, dollarRateService.currentMep());
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));

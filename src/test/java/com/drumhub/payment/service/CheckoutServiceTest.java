@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -40,6 +41,9 @@ class CheckoutServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private DollarRateService dollarRateService;
 
     @InjectMocks
     private CheckoutService checkoutService;
@@ -59,6 +63,8 @@ class CheckoutServiceTest {
     void setUp() {
         when(mpProperties.getAccessToken()).thenReturn("TEST-access-token");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(buildAlice()));
+        // Rate 1000 → pro:monthly = 5*1000 = 5000, pro:annual = 48*1000 = 48000, studio:monthly = 12*1000 = 12000
+        when(dollarRateService.currentMep()).thenReturn(1000.0);
     }
 
     @Test
@@ -184,5 +190,32 @@ class CheckoutServiceTest {
 
         Map<String, String> backUrls = (Map<String, String>) payload.get("back_urls");
         assertThat(backUrls).containsKeys("success", "failure", "pending");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void checkout_withRate1460_proMonthlyUnitPriceIs7300() {
+        when(dollarRateService.currentMep()).thenReturn(1460.0);
+        CheckoutRequest request = new CheckoutRequest("pro", "monthly");
+        when(mercadoPagoClient.createPreference(anyString(), any()))
+                .thenReturn("https://mp.com/checkout");
+
+        checkoutService.createCheckout(request, "alice");
+
+        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+        verify(mercadoPagoClient).createPreference(anyString(), captor.capture());
+
+        List<Map<String, Object>> items = (List<Map<String, Object>>) captor.getValue().get("items");
+        // 5 USD × 1460 → round(5*1460/100)*100 = round(73)*100 = 7300
+        assertThat(items.get(0).get("unit_price")).isEqualTo(7300);
+    }
+
+    @Test
+    void checkout_withInvalidPeriod_throwsBadRequestContainingPeriod() {
+        CheckoutRequest request = new CheckoutRequest("pro", "weekly");
+
+        assertThatThrownBy(() -> checkoutService.createCheckout(request, "alice"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("period");
     }
 }

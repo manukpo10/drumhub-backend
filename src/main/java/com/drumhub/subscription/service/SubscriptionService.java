@@ -3,6 +3,8 @@ package com.drumhub.subscription.service;
 import com.drumhub.common.exception.BadRequestException;
 import com.drumhub.common.exception.ConflictException;
 import com.drumhub.common.exception.ResourceNotFoundException;
+import com.drumhub.payment.config.PlanPrices;
+import com.drumhub.payment.service.DollarRateService;
 import com.drumhub.subscription.dto.CurrentPlanResponse;
 import com.drumhub.subscription.dto.PlanFeatures;
 import com.drumhub.subscription.dto.PlanResponse;
@@ -38,10 +40,24 @@ public class SubscriptionService {
     );
 
     private final UserRepository userRepository;
+    private final DollarRateService dollarRateService;
 
     @Transactional(readOnly = true)
     public List<PlanResponse> getPlans() {
-        return PLAN_CATALOG;
+        double mep = dollarRateService.currentMep();
+        return PLAN_CATALOG.stream()
+                .map(plan -> {
+                    PricingTier tier = plan.pricing();
+                    int monthlyArs    = PlanPrices.toArs(tier.monthly(),         mep);
+                    int annualArs     = PlanPrices.toArs(tier.annual(),          mep);
+                    int annualFullArs = PlanPrices.toArs(tier.annualFullPrice(), mep);
+                    PricingTier enriched = new PricingTier(
+                            tier.monthly(), tier.annual(), tier.annualFullPrice(),
+                            monthlyArs, annualArs, annualFullArs
+                    );
+                    return new PlanResponse(plan.id(), plan.name(), enriched, plan.features());
+                })
+                .toList();
     }
 
     @Transactional(readOnly = true)

@@ -3,16 +3,21 @@ package com.drumhub.subscription.service;
 import com.drumhub.common.exception.BadRequestException;
 import com.drumhub.common.exception.ConflictException;
 import com.drumhub.common.exception.ResourceNotFoundException;
+import com.drumhub.payment.service.DollarRateService;
 import com.drumhub.subscription.dto.CurrentPlanResponse;
 import com.drumhub.subscription.dto.PlanResponse;
+import com.drumhub.subscription.dto.PricingTier;
 import com.drumhub.user.domain.Plan;
 import com.drumhub.user.domain.User;
 import com.drumhub.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -27,13 +32,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class SubscriptionServiceTest {
 
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private DollarRateService dollarRateService;
+
     @InjectMocks
     private SubscriptionService subscriptionService;
+
+    @BeforeEach
+    void setUp() {
+        // Default rate: 1000 for clean math (pro:monthly=5000, pro:annual=48000, studio=12000)
+        org.mockito.Mockito.when(dollarRateService.currentMep()).thenReturn(1000.0);
+    }
 
     private static User buildUser(String username, Plan plan) {
         User user = User.builder()
@@ -203,5 +218,40 @@ class SubscriptionServiceTest {
 
         assertThat(count).isEqualTo(3);
         verify(userRepository).expireSubscriptions(any(Instant.class));
+    }
+
+    // ── getPlans ARS enrichment ──────────────────────────────────────────────
+
+    @Test
+    void getPlans_withMep1000_enrichesArsFieldsCorrectly() {
+        // dollarRateService.currentMep() returns 1000.0 from setUp()
+        List<PlanResponse> plans = subscriptionService.getPlans();
+
+        PlanResponse pro = plans.stream().filter(p -> "pro".equals(p.id())).findFirst().orElseThrow();
+        PricingTier proTier = pro.pricing();
+        assertThat(proTier.monthlyArs()).isEqualTo(5000);     // 5 * 1000
+        assertThat(proTier.annualArs()).isEqualTo(48000);     // 48 * 1000
+        assertThat(proTier.annualFullArs()).isEqualTo(60000); // 60 * 1000
+
+        PlanResponse studio = plans.stream().filter(p -> "studio".equals(p.id())).findFirst().orElseThrow();
+        PricingTier studioTier = studio.pricing();
+        assertThat(studioTier.monthlyArs()).isEqualTo(12000); // 12 * 1000
+
+        PlanResponse free = plans.stream().filter(p -> "free".equals(p.id())).findFirst().orElseThrow();
+        PricingTier freeTier = free.pricing();
+        assertThat(freeTier.monthlyArs()).isEqualTo(0);
+        assertThat(freeTier.annualArs()).isEqualTo(0);
+    }
+
+    @Test
+    void getPlans_withMep1000_usdFieldsUnchanged() {
+        List<PlanResponse> plans = subscriptionService.getPlans();
+
+        PlanResponse pro = plans.stream().filter(p -> "pro".equals(p.id())).findFirst().orElseThrow();
+        assertThat(pro.pricing().monthly()).isEqualTo(5.0);
+        assertThat(pro.pricing().annual()).isEqualTo(48.0);
+
+        PlanResponse studio = plans.stream().filter(p -> "studio".equals(p.id())).findFirst().orElseThrow();
+        assertThat(studio.pricing().monthly()).isEqualTo(12.0);
     }
 }

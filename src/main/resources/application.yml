@@ -38,6 +38,10 @@ app:
     access-token: ${MP_ACCESS_TOKEN}
     webhook-secret: ${MP_WEBHOOK_SECRET}
     public-key: ${MP_PUBLIC_KEY}
+  pricing:
+    # Fallback MEP rate used when dolarapi.com is unreachable and no cached rate exists.
+    # Override in production via MP_FALLBACK_MEP env var. Default: 1400 ARS/USD.
+    fallback-mep: ${MP_FALLBACK_MEP:1400}
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:431278406816-9iq60ns1ro7pmbo6ji2j0j849n93avcs.apps.googleusercontent.com}
