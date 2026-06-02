@@ -1,6 +1,7 @@
 package com.drumhub.payment.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,8 @@ public class DollarRateService {
     private Double cached;
     private long cachedAt;
 
-    /** Production constructor — Spring uses this via @Autowired / component scan. */
+    /** Production constructor — @Autowired tells Spring to use this one (two constructors exist). */
+    @Autowired
     public DollarRateService(DollarRateProvider provider,
                               @Value("${app.pricing.fallback-mep}") double fallbackRate) {
         this(provider, fallbackRate, System::currentTimeMillis);
