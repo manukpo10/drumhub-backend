@@ -62,7 +62,7 @@ class WebhookControllerTest {
         doNothing().when(webhookService).processWebhook(any(), anyString(), anyString(), anyString());
 
         mockMvc.perform(post("/api/webhooks/mp")
-                        .param("data.id", "12345")
+
                         .header("X-Signature", VALID_SIGNATURE)
                         .header("X-Request-Id", REQUEST_ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -77,7 +77,7 @@ class WebhookControllerTest {
                 .when(webhookService).processWebhook(any(), anyString(), anyString(), anyString());
 
         mockMvc.perform(post("/api/webhooks/mp")
-                        .param("data.id", "12345")
+
                         .header("X-Signature", "ts=bad,v1=bad")
                         .header("X-Request-Id", REQUEST_ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -92,7 +92,7 @@ class WebhookControllerTest {
         doNothing().when(webhookService).processWebhook(any(), anyString(), anyString(), anyString());
 
         mockMvc.perform(post("/api/webhooks/mp")
-                        .param("data.id", "12345")
+
                         .header("X-Signature", VALID_SIGNATURE)
                         .header("X-Request-Id", REQUEST_ID)
                         .contentType(MediaType.APPLICATION_JSON)
