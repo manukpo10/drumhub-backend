@@ -80,9 +80,9 @@ public class CheckoutService {
                 "payer", Map.of("email", user.getEmail()),
                 "external_reference", externalReference,
                 "back_urls", Map.of(
-                        "success", BACK_URL_BASE + "/#/payment-success",
-                        "failure", BACK_URL_BASE + "/#/payment-failure",
-                        "pending", BACK_URL_BASE + "/#/payment-pending"
+                        "success", BACK_URL_BASE + "/payment-success",
+                        "failure", BACK_URL_BASE + "/payment-failure",
+                        "pending", BACK_URL_BASE + "/payment-pending"
                 ),
                 "auto_return", "approved"
         );
