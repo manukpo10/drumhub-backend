@@ -23,6 +23,10 @@ public class CheckoutService {
 
     private static final Set<String> VALID_PAID_PLANS = Set.of("pro", "studio");
 
+    // Plans shown in the catalog but not yet purchasable ("Próximamente").
+    // TOGGLE: remove a plan from this set to enable its checkout.
+    private static final Set<String> COMING_SOON = Set.of("studio");
+
     private static final Map<String, String> PLAN_NAMES = Map.of(
             "pro", "DrumHub Pro",
             "studio", "DrumHub Studio"
@@ -42,6 +46,10 @@ public class CheckoutService {
 
         if (!VALID_PAID_PLANS.contains(planId)) {
             throw new BadRequestException("Cannot checkout with plan: " + planId + ". Only 'pro' and 'studio' are allowed.");
+        }
+
+        if (COMING_SOON.contains(planId)) {
+            throw new BadRequestException("The " + planId + " plan is not yet available for purchase.");
         }
 
         PlanPrices.Usd usdPrices = PlanPrices.PAID.get(planId);

@@ -139,19 +139,12 @@ class CheckoutServiceTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void checkout_studioMonthly_usesStudioPrice() {
+    void checkout_studioPlan_isComingSoon_throwsBadRequest() {
         CheckoutRequest request = new CheckoutRequest("studio", "monthly");
-        when(mercadoPagoClient.createPreference(anyString(), any()))
-                .thenReturn("https://mp.com/checkout");
 
-        checkoutService.createCheckout(request, "alice");
-
-        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
-        verify(mercadoPagoClient).createPreference(anyString(), captor.capture());
-
-        List<Map<String, Object>> items = (List<Map<String, Object>>) captor.getValue().get("items");
-        assertThat(items.get(0).get("unit_price")).isEqualTo(12000);
+        assertThatThrownBy(() -> checkoutService.createCheckout(request, "alice"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("not yet available");
     }
 
     @Test
