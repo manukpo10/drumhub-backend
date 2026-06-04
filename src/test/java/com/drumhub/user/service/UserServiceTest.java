@@ -97,7 +97,7 @@ class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         UserResponse expectedResponse = new UserResponse(
-                null, "bonham", "John Bonham", null, "bonham", null, "J", "free", Instant.now()
+                null, "bonham", "John Bonham", null, "bonham", null, null, "J", "free", Instant.now()
         );
         when(userMapper.toResponse(savedUser)).thenReturn(expectedResponse);
 

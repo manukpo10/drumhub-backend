@@ -64,7 +64,7 @@ class AuthControllerTest {
     private JwtAuthFilter jwtAuthFilter;
 
     private static final UserResponse SAMPLE_USER = new UserResponse(
-            1L, "bonham", "John Bonham", null, "bonham", "#e8ff00", "J", "free", Instant.now()
+            1L, "bonham", "John Bonham", null, "bonham", null, "#e8ff00", "J", "free", Instant.now()
     );
 
     @Test
