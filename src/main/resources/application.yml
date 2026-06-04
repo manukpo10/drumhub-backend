@@ -42,6 +42,9 @@ app:
     # Fallback MEP rate used when dolarapi.com is unreachable and no cached rate exists.
     # Override in production via MP_FALLBACK_MEP env var. Default: 1400 ARS/USD.
     fallback-mep: ${MP_FALLBACK_MEP:1400}
+  supabase:
+    url: ${SUPABASE_URL:https://yznaanpjkiivrujjnrjf.supabase.co}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:431278406816-9iq60ns1ro7pmbo6ji2j0j849n93avcs.apps.googleusercontent.com}

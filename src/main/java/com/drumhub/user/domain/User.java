@@ -45,6 +45,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(length = 50, columnDefinition = "varchar(50) default 'bonham'")
     private String avatarSeed;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(length = 7)
     private String color;
 

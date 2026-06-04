@@ -8,6 +8,7 @@ public record UserResponse(
         String name,
         String bio,
         String avatarSeed,
+        String avatarUrl,
         String color,
         String init,
         String plan,

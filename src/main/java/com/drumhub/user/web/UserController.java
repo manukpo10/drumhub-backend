@@ -6,6 +6,7 @@ import com.drumhub.user.dto.UpdateEmailRequest;
 import com.drumhub.user.dto.UpdatePasswordRequest;
 import com.drumhub.user.dto.UpdateProfileRequest;
 import com.drumhub.user.dto.UserResponse;
+import com.drumhub.user.service.SupabaseStorageService;
 import com.drumhub.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,11 +23,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
@@ -35,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final SupabaseStorageService supabaseStorageService;
 
     @GetMapping
     @Operation(summary = "List all users (pageable, filterable)")
@@ -95,6 +99,25 @@ public class UserController {
     ) {
         UserResponse user = userService.updateAvatar(userDetails.getUsername(), request);
         return ResponseEntity.ok(ApiResponse.ok(user, "Avatar updated"));
+    }
+
+    @PostMapping("/me/avatar-photo")
+    @Operation(summary = "Upload own avatar photo", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<UserResponse>> uploadAvatarPhoto(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            String avatarUrl = supabaseStorageService.uploadAvatar(
+                    userDetails.getUsername(),
+                    file.getBytes(),
+                    file.getContentType()
+            );
+            UserResponse user = userService.updateAvatarPhoto(userDetails.getUsername(), avatarUrl);
+            return ResponseEntity.ok(ApiResponse.ok(user, "Avatar photo uploaded"));
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Failed to read uploaded file", e);
+        }
     }
 
     @GetMapping("/{username}")

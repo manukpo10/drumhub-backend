@@ -174,6 +174,13 @@ public class UserService implements UserDetailsService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
+    @Transactional
+    public UserResponse updateAvatarPhoto(String currentUsername, String avatarUrl) {
+        User user = loadActiveUser(currentUsername);
+        user.setAvatarUrl(avatarUrl);
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
     @Transactional(readOnly = true)
     public UserResponse getCurrentUser(String username) {
         return findByUsername(username);
