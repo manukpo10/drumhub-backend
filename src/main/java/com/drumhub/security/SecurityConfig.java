@@ -72,6 +72,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/genres/**").permitAll()
                         // Public — community activity feed (shown on home page to guests)
                         .requestMatchers(HttpMethod.GET, "/api/activity/**").permitAll()
+                        // Public — HEAD mirrors GET on the read-only endpoints. Per RFC 7231 a HEAD
+                        // is identical to GET without a body, so uptime monitors, caches and proxies
+                        // must not be rejected. Declared after the authenticated /me matchers above,
+                        // so HEAD on protected routes still requires authentication.
+                        .requestMatchers(HttpMethod.HEAD,
+                                "/api/pricing/plans",
+                                "/api/users/**",
+                                "/api/grooves/**",
+                                "/api/genres/**",
+                                "/api/activity/**").permitAll()
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
