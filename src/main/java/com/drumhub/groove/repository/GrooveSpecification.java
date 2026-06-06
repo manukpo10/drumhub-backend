@@ -37,8 +37,11 @@ public final class GrooveSpecification {
     }
 
     public static Specification<Groove> hasTag(String tag) {
+        // tags is stored as a JSON string (StringListConverter), e.g. ["shuffle","ghost notes"].
+        // Cast the converted attribute to String and match the quoted tag so we hit the exact
+        // element, not partial substrings (e.g. "rock" must not match "rock-clasico").
         return (root, query, cb) ->
-                cb.like(root.get("tags"), "%" + tag + "%");
+                cb.like(root.get("tags").as(String.class), "%\"" + tag + "\"%");
     }
 
     /**

@@ -66,8 +66,11 @@ public class GrooveService {
         if (tag != null && !tag.isBlank()) {
             specs.add(GrooveSpecification.hasTag(tag));
         }
-        if (bpmMin != null && bpmMax != null) {
-            specs.add(GrooveSpecification.hasBpmBetween(bpmMin, bpmMax));
+        if (bpmMin != null || bpmMax != null) {
+            // Allow a single open-ended bound: the UI often sends only bpmMax ("≤ 200").
+            specs.add(GrooveSpecification.hasBpmBetween(
+                    bpmMin != null ? bpmMin : 0,
+                    bpmMax != null ? bpmMax : Integer.MAX_VALUE));
         }
 
         Specification<Groove> combined = Specification.allOf(specs);
