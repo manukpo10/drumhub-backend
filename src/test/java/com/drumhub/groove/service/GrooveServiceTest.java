@@ -89,7 +89,7 @@ class GrooveServiceTest {
         when(grooveRepository.findTrending(any(Pageable.class))).thenReturn(groovePage);
 
         GrooveResponse response = new GrooveResponse(
-                1L, "test-groove", "Test Groove", "user1", "Test User",
+                1L, "test-groove", "Test Groove", "user1", "Test User", "bonham", null,
                 "Funk", "funk", 100, "Avanzado", 0L, 0L, false,
                 List.of(), null, Map.of(), "4/4", 1, "pearl", null
         );
@@ -129,7 +129,7 @@ class GrooveServiceTest {
         when(grooveRepository.save(any(Groove.class))).thenReturn(savedGroove);
 
         GrooveResponse expectedResponse = new GrooveResponse(
-                1L, "my-groove", "My Groove", "drummer1", "Test User",
+                1L, "my-groove", "My Groove", "drummer1", "Test User", "bonham", null,
                 "Funk", "funk", 100, "Avanzado", 0L, 0L, false,
                 List.of(), null, Map.of(), "4/4", 1, "pearl", null
         );

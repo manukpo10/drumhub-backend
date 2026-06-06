@@ -58,7 +58,7 @@ class GrooveControllerTest {
 
     private static final GrooveResponse SAMPLE = new GrooveResponse(
             1L, "purdie-shuffle", "Purdie Shuffle",
-            "bernardp", "Bernard Purdie",
+            "bernardp", "Bernard Purdie", "bonham", null,
             "Funk", "funk",
             98, "Avanzado",
             487L, 3120L, true,
