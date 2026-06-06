@@ -12,11 +12,9 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface GenreMapper {
 
-    @Mapping(target = "grooveCount", constant = "0L")
-    GenreResponse toResponse(Genre genre);
+    @Mapping(target = "grooveCount", source = "grooveCount")
+    GenreResponse toResponse(Genre genre, long grooveCount);
 
-    @Mapping(target = "grooveCount", constant = "0L")
-    GenreDetailResponse toDetailResponse(Genre genre);
-
-    List<GenreResponse> toResponseList(List<Genre> genres);
+    @Mapping(target = "grooveCount", source = "grooveCount")
+    GenreDetailResponse toDetailResponse(Genre genre, long grooveCount);
 }

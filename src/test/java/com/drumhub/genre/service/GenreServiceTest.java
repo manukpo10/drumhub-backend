@@ -6,6 +6,7 @@ import com.drumhub.genre.dto.GenreDetailResponse;
 import com.drumhub.genre.dto.GenreResponse;
 import com.drumhub.genre.mapper.GenreMapper;
 import com.drumhub.genre.repository.GenreRepository;
+import com.drumhub.groove.repository.GrooveRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,6 +18,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,6 +28,9 @@ class GenreServiceTest {
 
     @Mock
     private GenreRepository genreRepository;
+
+    @Mock
+    private GrooveRepository grooveRepository;
 
     @Mock
     private GenreMapper genreMapper;
@@ -48,22 +55,25 @@ class GenreServiceTest {
     }
 
     @Test
-    void findAll_returnsAllActiveGenres() {
+    void findAll_returnsAllActiveGenresWithCounts() {
         Genre rock = buildGenre("Rock", "rock");
         Genre funk = buildGenre("Funk", "funk");
         List<Genre> genres = List.of(funk, rock);
 
-        GenreResponse rockResponse = new GenreResponse(null, "Rock", "rock", "🎸", "#e8ff00", "Intermedio", "4/4", 100, 160, 0L);
-        GenreResponse funkResponse = new GenreResponse(null, "Funk", "funk", "🕺", "#ff6b00", "Avanzado", "4/4", 80, 120, 0L);
+        GenreResponse rockResponse = new GenreResponse(null, "Rock", "rock", "🎸", "#e8ff00", "Intermedio", "4/4", 100, 160, 10L);
+        GenreResponse funkResponse = new GenreResponse(null, "Funk", "funk", "🕺", "#ff6b00", "Avanzado", "4/4", 80, 120, 5L);
 
         when(genreRepository.findByActivoTrueOrderByNameAsc()).thenReturn(genres);
-        when(genreMapper.toResponseList(genres)).thenReturn(List.of(funkResponse, rockResponse));
+        when(grooveRepository.countActiveGroupedByGenre()).thenReturn(List.of());
+        when(genreMapper.toResponse(eq(funk), anyLong())).thenReturn(funkResponse);
+        when(genreMapper.toResponse(eq(rock), anyLong())).thenReturn(rockResponse);
 
         List<GenreResponse> result = genreService.findAll();
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).name()).isEqualTo("Funk");
         assertThat(result.get(1).name()).isEqualTo("Rock");
+        assertThat(result.get(1).grooveCount()).isEqualTo(10L);
     }
 
     @Test
@@ -71,17 +81,18 @@ class GenreServiceTest {
         Genre rock = buildGenre("Rock", "rock");
         GenreDetailResponse detail = new GenreDetailResponse(
                 1L, "Rock", "rock", "🎸", "#e8ff00", "Intermedio", "4/4",
-                100, 160, "Test description", List.of("Classic Rock"), List.of("Metal"), 0L
+                100, 160, "Test description", List.of("Classic Rock"), List.of("Metal"), 42L
         );
 
         when(genreRepository.findBySlug("rock")).thenReturn(Optional.of(rock));
-        when(genreMapper.toDetailResponse(rock)).thenReturn(detail);
+        when(grooveRepository.countActiveByGenreId(any())).thenReturn(42L);
+        when(genreMapper.toDetailResponse(eq(rock), anyLong())).thenReturn(detail);
 
         GenreDetailResponse result = genreService.findBySlug("rock");
 
         assertThat(result).isNotNull();
         assertThat(result.slug()).isEqualTo("rock");
-        assertThat(result.grooveCount()).isZero();
+        assertThat(result.grooveCount()).isEqualTo(42L);
     }
 
     @Test

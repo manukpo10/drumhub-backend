@@ -24,6 +24,14 @@ public interface GrooveRepository extends JpaRepository<Groove, Long>, JpaSpecif
 
     long countByAuthorUsernameAndActivoTrue(String username);
 
+    /** Active groove count per genre id, for genre facet counts. Returns rows of [genreId, count]. */
+    @Query("SELECT g.genre.id, COUNT(g) FROM Groove g WHERE g.activo = true GROUP BY g.genre.id")
+    List<Object[]> countActiveGroupedByGenre();
+
+    /** Active groove count for a single genre. */
+    @Query("SELECT COUNT(g) FROM Groove g WHERE g.activo = true AND g.genre.id = :genreId")
+    long countActiveByGenreId(@Param("genreId") Long genreId);
+
     /** Recent uploads for the activity feed — author eagerly fetched to avoid N+1. */
     @Query("SELECT g FROM Groove g JOIN FETCH g.author WHERE g.activo = true ORDER BY g.createdAt DESC")
     List<Groove> findRecentForActivityFeed(Pageable pageable);
