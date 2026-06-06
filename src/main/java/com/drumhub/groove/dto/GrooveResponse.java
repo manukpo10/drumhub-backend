@@ -10,6 +10,8 @@ public record GrooveResponse(
         String title,
         String authorUsername,
         String authorName,
+        String authorAvatarSeed,
+        String authorAvatarUrl,
         String genre,
         String genreSlug,
         Integer bpm,

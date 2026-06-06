@@ -11,10 +11,12 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface GrooveMapper {
 
-    @Mapping(source = "author.username", target = "authorUsername")
-    @Mapping(source = "author.name",     target = "authorName")
-    @Mapping(source = "genre.name",      target = "genre")
-    @Mapping(source = "genre.slug",      target = "genreSlug")
+    @Mapping(source = "author.username",   target = "authorUsername")
+    @Mapping(source = "author.name",       target = "authorName")
+    @Mapping(source = "author.avatarSeed", target = "authorAvatarSeed")
+    @Mapping(source = "author.avatarUrl",  target = "authorAvatarUrl")
+    @Mapping(source = "genre.name",        target = "genre")
+    @Mapping(source = "genre.slug",        target = "genreSlug")
     GrooveResponse toResponse(Groove groove);
 
     List<GrooveResponse> toResponseList(List<Groove> grooves);
