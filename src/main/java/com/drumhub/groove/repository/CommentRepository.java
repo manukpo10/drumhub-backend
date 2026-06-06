@@ -15,6 +15,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     long countByGrooveIdAndActivoTrue(Long grooveId);
 
+    /** Active comment count per groove id, for list facet counts. Returns rows of [grooveId, count]. */
+    @Query("SELECT c.groove.id, COUNT(c) FROM Comment c WHERE c.activo = true AND c.groove.id IN :ids GROUP BY c.groove.id")
+    List<Object[]> countActiveByGrooveIds(@Param("ids") List<Long> ids);
+
     /** Recent comments for the activity feed — author and groove eagerly fetched. */
     @Query("SELECT c FROM Comment c JOIN FETCH c.author JOIN FETCH c.groove WHERE c.activo = true ORDER BY c.createdAt DESC")
     List<Comment> findRecentForActivityFeed(Pageable pageable);

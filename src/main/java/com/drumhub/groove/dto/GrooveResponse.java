@@ -25,5 +25,6 @@ public record GrooveResponse(
         String timeSig,
         Integer bars,
         String kit,
+        long commentCount,
         Instant createdAt
 ) {}

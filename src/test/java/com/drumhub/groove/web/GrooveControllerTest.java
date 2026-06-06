@@ -65,7 +65,7 @@ class GrooveControllerTest {
             List.of("shuffle", "ghost notes"),
             "The classic shuffle",
             Map.of("kick", List.of(1, 0, 0, 0)),
-            "4/4", 1, "pearl",
+            "4/4", 1, "pearl", 0L,
             Instant.now()
     );
 

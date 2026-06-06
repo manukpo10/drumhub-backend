@@ -88,4 +88,9 @@ public class Groove extends BaseEntity {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String kit = "pearl";
+
+    /** Not persisted — populated by the service so responses can carry the live comment count. */
+    @jakarta.persistence.Transient
+    @Builder.Default
+    private long commentCount = 0;
 }

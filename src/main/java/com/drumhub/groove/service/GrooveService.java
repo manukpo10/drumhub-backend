@@ -10,6 +10,7 @@ import com.drumhub.groove.dto.CreateGrooveRequest;
 import com.drumhub.groove.dto.GrooveResponse;
 import com.drumhub.groove.dto.UpdateGrooveRequest;
 import com.drumhub.groove.mapper.GrooveMapper;
+import com.drumhub.groove.repository.CommentRepository;
 import com.drumhub.groove.repository.GrooveRepository;
 import com.drumhub.groove.repository.GrooveSpecification;
 import com.drumhub.subscription.domain.PlanLimits;
@@ -25,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -37,8 +40,28 @@ public class GrooveService {
     private final GrooveRepository grooveRepository;
     private final GenreRepository genreRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
     private final GrooveMapper grooveMapper;
     private final SlugService slugService;
+
+    /** Populate each groove's live comment count (single grouped query) and map to responses. */
+    private Page<GrooveResponse> toResponsePage(Page<Groove> page) {
+        List<Long> ids = page.getContent().stream().map(Groove::getId).toList();
+        Map<Long, Long> counts = new HashMap<>();
+        if (!ids.isEmpty()) {
+            for (Object[] row : commentRepository.countActiveByGrooveIds(ids)) {
+                counts.put((Long) row[0], (Long) row[1]);
+            }
+        }
+        page.getContent().forEach(g -> g.setCommentCount(counts.getOrDefault(g.getId(), 0L)));
+        return page.map(grooveMapper::toResponse);
+    }
+
+    /** Attach the comment count to a single groove before mapping. */
+    private GrooveResponse toResponseWithComments(Groove groove) {
+        groove.setCommentCount(commentRepository.countByGrooveIdAndActivoTrue(groove.getId()));
+        return grooveMapper.toResponse(groove);
+    }
 
     @Transactional(readOnly = true)
     public Page<GrooveResponse> findAll(
@@ -87,13 +110,13 @@ public class GrooveService {
             Page<Groove> page = grooveRepository.findTrending(
                     PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
             );
-            return page.map(grooveMapper::toResponse);
+            return toResponsePage(page);
         }
 
         org.springframework.data.domain.Sort sorting = GrooveSpecification.sortBy(sort);
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sorting);
 
-        return grooveRepository.findAll(combined, sortedPageable).map(grooveMapper::toResponse);
+        return toResponsePage(grooveRepository.findAll(combined, sortedPageable));
     }
 
     @Transactional(readOnly = true)
@@ -108,14 +131,14 @@ public class GrooveService {
             groove = grooveRepository.findBySlugAndActivoTrue(idOrSlug)
                     .orElseThrow(() -> new ResourceNotFoundException("Groove not found: " + idOrSlug));
         }
-        return grooveMapper.toResponse(groove);
+        return toResponseWithComments(groove);
     }
 
     @Transactional(readOnly = true)
     public GrooveResponse findFeatured() {
         Groove groove = grooveRepository.findFirstByFeaturedTrueAndActivoTrue()
                 .orElseThrow(() -> new ResourceNotFoundException("No featured groove found"));
-        return grooveMapper.toResponse(groove);
+        return toResponseWithComments(groove);
     }
 
     @Transactional

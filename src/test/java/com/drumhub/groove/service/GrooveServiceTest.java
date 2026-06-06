@@ -8,6 +8,7 @@ import com.drumhub.groove.domain.Groove;
 import com.drumhub.groove.dto.CreateGrooveRequest;
 import com.drumhub.groove.dto.GrooveResponse;
 import com.drumhub.groove.mapper.GrooveMapper;
+import com.drumhub.groove.repository.CommentRepository;
 import com.drumhub.groove.repository.GrooveRepository;
 import com.drumhub.subscription.domain.PlanLimits;
 import com.drumhub.user.domain.Plan;
@@ -41,6 +42,7 @@ class GrooveServiceTest {
     @Mock private GrooveRepository grooveRepository;
     @Mock private GenreRepository genreRepository;
     @Mock private UserRepository userRepository;
+    @Mock private CommentRepository commentRepository;
     @Mock private GrooveMapper grooveMapper;
     @Mock private SlugService slugService;
 
@@ -87,11 +89,12 @@ class GrooveServiceTest {
         Page<Groove> groovePage = new PageImpl<>(List.of(groove));
 
         when(grooveRepository.findTrending(any(Pageable.class))).thenReturn(groovePage);
+        when(commentRepository.countActiveByGrooveIds(any())).thenReturn(List.of());
 
         GrooveResponse response = new GrooveResponse(
                 1L, "test-groove", "Test Groove", "user1", "Test User", "bonham", null,
                 "Funk", "funk", 100, "Avanzado", 0L, 0L, false,
-                List.of(), null, Map.of(), "4/4", 1, "pearl", null
+                List.of(), null, Map.of(), "4/4", 1, "pearl", 0L, null
         );
         when(grooveMapper.toResponse(groove)).thenReturn(response);
 
@@ -131,7 +134,7 @@ class GrooveServiceTest {
         GrooveResponse expectedResponse = new GrooveResponse(
                 1L, "my-groove", "My Groove", "drummer1", "Test User", "bonham", null,
                 "Funk", "funk", 100, "Avanzado", 0L, 0L, false,
-                List.of(), null, Map.of(), "4/4", 1, "pearl", null
+                List.of(), null, Map.of(), "4/4", 1, "pearl", 0L, null
         );
         when(grooveMapper.toResponse(savedGroove)).thenReturn(expectedResponse);
 
